@@ -106,21 +106,41 @@ export default {
       })
     },
     handleLogin() {
-      this.$refs.loginForm.validate(valid => {
-        if (valid) {
-          this.loading = true
-          this.$store.dispatch('user/login', this.loginForm).then(() => {
-            this.$router.push({ path: this.redirect || '/' })
-            this.loading = false
-          }).catch(() => {
-            this.loading = false
-          })
+      // 调用后端登录API
+      this.$axios.post('/api/login', this.loginForm).then(response => {
+        const { data } = response;
+        if (data.success) {
+          // 存储用户信息和角色
+          this.$store.commit('SET_USER', data.user);
+          // 根据角色重定向到不同的管理页面
+          if (data.user.user_type === 'tenant') {
+            this.$router.push('/tenant/dashboard');
+          } else if (data.user.user_type === 'landlord') {
+            this.$router.push('/landlord/dashboard');
+          }
         } else {
-          console.log('error submit!!')
-          return false
+          this.$message.error(data.message);
         }
-      })
+      }).catch(error => {
+        console.error('Login error:', error);
+      });
     }
+    // handleLogin() {
+    //   this.$refs.loginForm.validate(valid => {
+    //     if (valid) {
+    //       this.loading = true
+    //       this.$store.dispatch('user/login', this.loginForm).then(() => {
+    //         this.$router.push({ path: this.redirect || '/' })
+    //         this.loading = false
+    //       }).catch(() => {
+    //         this.loading = false
+    //       })
+    //     } else {
+    //       console.log('error submit!!')
+    //       return false
+    //     }
+    //   })
+    // }
   }
 }
 </script>
